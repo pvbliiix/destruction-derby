@@ -9,7 +9,8 @@ Destruction Derby is an internal CS:GO cheat.
 # How to use
 Inject compiled DLL into a CS:GO process (do some research for it). Once injected, press F8 to toggle no flash or F9 to toggle triggerbot
 
-# Upcoming
+# Todos
 - wallhack
 - aimbot
 - GUI
+- refactoring whole thing into OOP
