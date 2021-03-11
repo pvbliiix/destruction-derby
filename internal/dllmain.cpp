@@ -1,14 +1,15 @@
 ﻿#include <windows.h>
 #include <TlHelp32.h>
 #include <thread>
-#include "offsets.h"
+#include "offsets.hpp"
 
 DWORD clientBase;
 
 bool triggerOn = false;
+bool whOn = false;
 bool noFlashOn = false;
 
-void noflash()
+void noFlash()
 {
 	while (true)
 	{
@@ -54,12 +55,19 @@ DWORD WINAPI HackThread(HMODULE hMod)
 	clientBase = (DWORD)GetModuleHandle(L"client.dll");
 
 	std::thread triggerThread(trigger);
+	std::thread noFlashThread(noFlash);
 
 	while (true)
 	{
 		if (GetAsyncKeyState(VK_F9))
 		{
 			triggerOn = !triggerOn;
+
+			Sleep(300);
+		}
+		if (GetAsyncKeyState(VK_F8))
+		{
+			noFlashOn = !noFlashOn;
 
 			Sleep(300);
 		}
