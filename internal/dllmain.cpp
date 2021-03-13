@@ -1,6 +1,7 @@
 ﻿#include <windows.h>
 #include <TlHelp32.h>
 #include <thread>
+#include <iostream>
 #include "offsets.hpp"
 
 DWORD clientBase;
@@ -8,6 +9,70 @@ DWORD clientBase;
 bool triggerOn = false;
 bool whOn = false;
 bool noFlashOn = false;
+
+void wallhack()
+{
+	while (true)
+	{
+		Sleep(10);
+		if (!whOn)
+			continue;
+
+		DWORD glowObj = *(DWORD*)(clientBase + dwGlowObjectManager);
+		DWORD playerBase = *(DWORD*)(clientBase + dwLocalPlayer);
+		int* myTeam =  (int*)(playerBase + m_iTeamNum);
+
+		for (int x = 0; x < 32; x++)
+		{
+			DWORD player = *(DWORD*)(clientBase + dwEntityList + x * 0x10);
+			if (player == 0)
+				continue;
+
+			bool* dormant = (bool*)(player + 0xED);
+			if (*dormant)
+				continue;
+
+			int* team = (int*)(player + m_iTeamNum);
+			if (*team != 2 && *team != 3)
+				continue;
+
+			DWORD currentGlowIndex = *(DWORD*)(player + m_iGlowIndex);
+
+			if (*team != *myTeam)
+			{
+				float* glowR = (float*)(glowObj + currentGlowIndex * 0x38 + 0x4);
+				float* glowG = (float*)(glowObj + currentGlowIndex * 0x38 + 0x8);
+				float* glowB = (float*)(glowObj + currentGlowIndex * 0x38 + 0xC);
+				float* glowA = (float*)(glowObj + currentGlowIndex * 0x38 + 0x10);
+				bool* glowOccluded = (bool*)(glowObj + currentGlowIndex * 0x38 + 0x24);
+				bool* glowUnoccluded = (bool*)(glowObj + currentGlowIndex * 0x38 + 0x25);
+
+				*glowR = 255;
+				*glowG = 0;
+				*glowB = 0;
+				*glowA = 255;
+				*glowOccluded = true;
+				*glowUnoccluded = false;
+			}
+			else
+			{
+				float* glowR = (float*)(glowObj + currentGlowIndex * 0x38 + 0x4);
+				float* glowG = (float*)(glowObj + currentGlowIndex * 0x38 + 0x8);
+				float* glowB = (float*)(glowObj + currentGlowIndex * 0x38 + 0xC);
+				float* glowA = (float*)(glowObj + currentGlowIndex * 0x38 + 0x10);
+				bool* glowOccluded = (bool*)(glowObj + currentGlowIndex * 0x38 + 0x24);
+				bool* glowUnoccluded = (bool*)(glowObj + currentGlowIndex * 0x38 + 0x25);
+
+				*glowR = 0;
+				*glowG = 255;
+				*glowB = 0;
+				*glowA = 255;
+				*glowOccluded = true;
+				*glowUnoccluded = false;
+			}
+		}
+	}
+}
 
 void noFlash()
 {
@@ -28,7 +93,7 @@ void noFlash()
 
 void trigger()
 {
-		while (true)
+	while (true)
 	{
 		if (!triggerOn)
 			continue;
@@ -56,6 +121,7 @@ DWORD WINAPI HackThread(HMODULE hMod)
 
 	std::thread triggerThread(trigger);
 	std::thread noFlashThread(noFlash);
+	std::thread whThread(wallhack);
 
 	while (true)
 	{
@@ -68,6 +134,12 @@ DWORD WINAPI HackThread(HMODULE hMod)
 		if (GetAsyncKeyState(VK_F8))
 		{
 			noFlashOn = !noFlashOn;
+
+			Sleep(300);
+		}
+		if (GetAsyncKeyState(VK_F7))
+		{
+			whOn = !whOn;
 
 			Sleep(300);
 		}
